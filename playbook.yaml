@@ -1,0 +1,13 @@
+---
+- name: virtual machine basic configuration
+  hosts: all
+  gather_facts: false
+  become: yes
+  tasks:
+
+    - name: ensure avahi-daemon is installed
+      apt:
+        name: avahi-daemon
+        state: latest
+        update_cache: yes
+  
