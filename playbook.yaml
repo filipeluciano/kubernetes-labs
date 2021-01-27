@@ -1,13 +1,77 @@
 ---
 - name: virtual machine basic configuration
   hosts: all
-  gather_facts: false
   become: yes
   tasks:
+
+    - name: ensure swap is turned off
+      shell: |
+        swapoff -a
+      when: ansible_swaptotal_mb > 0
+  
+    - name: apt update
+      apt:
+        update_cache: yes
+        upgrade: yes
 
     - name: ensure avahi-daemon is installed
       apt:
         name: avahi-daemon
         state: latest
+
+    - name: ensure docker is installed
+      apt:
+        name: docker.io
+        state: latest
+      tags:
+        - docker
+
+    - name: change docker driver
+      copy:
+        src: daemon.json
+        dest: /etc/docker/daemon.json
+      tags:
+        - docker
+      notify: restart docker
+
+    - name: ensure docker service is running and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      tags:
+        - docker
+
+    - name: add kubernetes repo gpg key
+      apt_key:
+        id: BA07F4FB
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+      tags:
+        - kubernetes
+
+    - name: add kubernetes repo
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+      tags:
+        - kubernetes
+
+    - name: ensure kubernetes is installed
+      apt:
         update_cache: yes
-  
+        name: "{{ item }}"
+        state: present
+      loop:
+        - kubelet=1.19.0-00 
+        - kubectl=1.19.0-00 
+        - kubeadm=1.19.0-00
+      tags:
+        - kubernetes
+
+  handlers:
+    
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted

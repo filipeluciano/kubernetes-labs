@@ -1,11 +1,11 @@
 VAGRANT_BOX_IMAGE = "ubuntu/bionic64"
-NODE_COUNT = 2
+NODE_COUNT = 1
 
 Vagrant.configure("2") do |config|
 
   config.vm.provider "virtualbox" do |virtualbox|
     virtualbox.cpus = 2
-    virtualbox.memory = 8192
+    virtualbox.memory = 2048
   end
 
   config.vm.define "master", primary: true do |master|
